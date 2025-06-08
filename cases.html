@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit a Case | MedCaseShare</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">MedCaseShare</div>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="cases.html">Cases</a></li>
+            <li><a href="articles.html">Articles</a></li>
+            <li><a href="about.html">About</a></li>
+        </ul>
+    </nav>
+
+    <section class="case-form">
+        <h2>Submit a Medical Case</h2>
+        <form id="caseSubmissionForm">
+            <label for="caseTitle">Case Title:</label>
+            <input type="text" id="caseTitle" required>
+
+            <label for="caseDescription">Description:</label>
+            <textarea id="caseDescription" required></textarea>
+
+            <label for="labReports">Upload Lab Reports (Image/PDF):</label>
+            <input type="file" id="labReports" accept=".jpg,.png,.pdf">
+
+            <label for="graphs">Upload Graphs (ECG/X-ray):</label>
+            <input type="file" id="graphs" accept=".jpg,.png">
+
+            <button type="submit" class="btn">Submit Case</button>
+        </form>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 MedCaseShare</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
