@@ -6,8 +6,10 @@
     <title>MedCaseShare | Medical Case Discussions</title>
     <link rel="stylesheet" href="style.css">
     
-    <!-- Firebase v8 SDK -->
+    <!-- Firebase v8 SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script> 
+    <!-- Added for authentication -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     
     <!-- Initialize Firebase -->
@@ -27,7 +29,12 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         
-        // Make database available globally (optional)
+        // Initialize Authentication
+        firebase.auth().signInAnonymously()
+            .then(() => console.log("Anonymous authentication successful"))
+            .catch(error => console.error("Auth error:", error));
+        
+        // Make database available globally
         window.db = database;
     </script>
 </head>
