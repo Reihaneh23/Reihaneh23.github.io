@@ -1,69 +1,35 @@
-// Debug initialization
-console.log("Script loaded - Firebase available:", typeof firebase !== 'undefined');
+// Wait for Firebase to be ready
+document.addEventListener('DOMContentLoaded', () => {
+  console.log("DOM loaded - Checking Firebase:", typeof firebase !== 'undefined');
+  
+  if (!firebase.apps.length) {
+    console.error("Firebase not loaded!");
+    return;
+  }
 
-// Initialize Firebase Authentication
-firebase.auth().signInAnonymously()
-  .then(() => {
-    console.log("Authenticated anonymously with UID:", firebase.auth().currentUser.uid);
-  })
-  .catch(error => {
-    console.error("Authentication error:", error);
-    alert("Authentication failed. Please refresh the page.");
-  });
+  // Form submission handler
+  document.getElementById("caseSubmissionForm")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    console.log("Form submission started");
 
-// Form Submission Handler
-document.getElementById("caseSubmissionForm").addEventListener("submit", async function(e) {
-  e.preventDefault();
-  console.log("Form submission initiated");
+    try {
+      const userCred = await firebase.auth().signInAnonymously();
+      console.log("Authenticated with UID:", userCred.user.uid);
 
-  // Show loading state
-  const submitBtn = e.target.querySelector('button[type="submit"]');
-  const originalBtnText = submitBtn.textContent;
-  submitBtn.disabled = true;
-  submitBtn.textContent = "Submitting...";
+      const caseData = {
+        title: document.getElementById("caseTitle").value,
+        description: document.getElementById("caseDescription").value,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      };
 
-  try {
-    // Validate required fields
-    const title = document.getElementById("caseTitle").value.trim();
-    const description = document.getElementById("caseDescription").value.trim();
-
-    if (!title || !description) {
-      throw new Error("Please fill all required fields");
+      const ref = await firebase.database().ref("cases").push(caseData);
+      console.log("Saved with ID:", ref.key);
+      alert(`Case #${ref.key.substr(0, 5)} saved!`);
+      e.target.reset();
+      
+    } catch (error) {
+      console.error("Full error:", error);
+      alert("Error: " + error.message);
     }
-
-    // Prepare case data
-    const caseData = {
-      title: title,
-      description: description,
-      timestamp: firebase.database.ServerValue.TIMESTAMP,
-      user: firebase.auth().currentUser?.uid || "unknown"
-    };
-    console.log("Prepared case data:", caseData);
-
-    // Push to Firebase
-    const newCaseRef = firebase.database().ref("cases").push();
-    await newCaseRef.set(caseData);
-    
-    console.log("Successfully saved with ID:", newCaseRef.key);
-    alert(`Case #${newCaseRef.key.substring(0, 8)} submitted successfully!`);
-    
-    // Reset form
-    this.reset();
-  } catch (error) {
-    console.error("Submission error:", error);
-    alert(`Submission failed: ${error.message}`);
-  } finally {
-    // Restore button state
-    submitBtn.disabled = false;
-    submitBtn.textContent = originalBtnText;
-  }
-});
-
-// Debug: Monitor auth state changes
-firebase.auth().onAuthStateChanged(user => {
-  if (user) {
-    console.log("User auth state: Signed in (Anonymous)");
-  } else {
-    console.log("User auth state: Signed out");
-  }
+  });
 });
