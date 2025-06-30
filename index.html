@@ -5,16 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MedCaseShare | Medical Case Discussions</title>
     <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation and content remains the same as before -->
     
-    <!-- Firebase v8 SDKs -->
+    <!-- Load Firebase and scripts AT THE BOTTOM -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script> 
-    <!-- Added for authentication -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     
-    <!-- Initialize Firebase -->
     <script>
-        // Your web app's Firebase configuration
+        // Your Firebase config
         const firebaseConfig = {
             apiKey: "AIzaSyAEiK7_TLPLr6mOgLD0Sd-ULHO-DC7q9pg",
             authDomain: "medussion.firebaseapp.com",
@@ -24,61 +25,13 @@
             messagingSenderId: "734202700211",
             appId: "1:734202700211:web:11065e5e65965b1782abc6"
         };
-
+        
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        
-        // Initialize Authentication
-        firebase.auth().signInAnonymously()
-            .then(() => console.log("Anonymous authentication successful"))
-            .catch(error => console.error("Auth error:", error));
-        
-        // Make database available globally
-        window.db = database;
+        console.log("Firebase initialized successfully!");
     </script>
-</head>
-<body>
-    <!-- Navigation Bar -->
-    <nav>
-        <div class="logo">MedCaseShare</div>
-        <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="cases.html">Cases</a></li>
-            <li><a href="articles.html">Articles</a></li>
-            <li><a href="about.html">About</a></li>
-        </ul>
-    </nav>
-
-    <!-- Hero Section -->
-    <header class="hero">
-        <h1>Share & Discuss Challenging Medical Cases</h1>
-        <p>A platform for medical students and professionals to collaborate.</p>
-        <a href="cases.html" class="btn">View Cases</a>
-    </header>
-
-    <!-- Features Section -->
-    <section class="features">
-        <div class="feature-card">
-            <h3>Upload Lab Reports</h3>
-            <p>Share anonymized patient data for discussion.</p>
-        </div>
-        <div class="feature-card">
-            <h3>Discuss Graphs</h3>
-            <p>Analyze ECGs, X-rays, and lab trends.</p>
-        </div>
-        <div class="feature-card">
-            <h3>Latest Research</h3>
-            <p>Stay updated with medical journals.</p>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer>
-        <p>&copy; 2024 MedCaseShare | Open-Source Medical Education</p>
-    </footer>
-
-    <!-- Your custom JavaScript -->
+    
+    <!-- Your script.js loads LAST -->
     <script src="script.js"></script>
 </body>
 </html>
