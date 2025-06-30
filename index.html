@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MedCaseShare | Medical Case Discussions</title>
+    <title>MedCaseShare</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Navigation and content remains the same as before -->
-    
-    <!-- Load Firebase and scripts AT THE BOTTOM -->
+    <!-- Your HTML content here -->
+
+    <!-- 1. Load Firebase FIRST -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    
+
+    <!-- 2. Initialize Firebase IMMEDIATELY after -->
     <script>
-        // Your Firebase config
+        // CONFIG - Replace with your actual config
         const firebaseConfig = {
             apiKey: "AIzaSyAEiK7_TLPLr6mOgLD0Sd-ULHO-DC7q9pg",
             authDomain: "medussion.firebaseapp.com",
@@ -26,12 +27,16 @@
             appId: "1:734202700211:web:11065e5e65965b1782abc6"
         };
         
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        console.log("Firebase initialized successfully!");
+        try {
+            firebase.initializeApp(firebaseConfig);
+            console.log("Firebase initialized!");
+            window.firebaseReady = true; // Global flag
+        } catch (err) {
+            console.error("Firebase init failed", err);
+        }
     </script>
-    
-    <!-- Your script.js loads LAST -->
+
+    <!-- 3. Load your script LAST -->
     <script src="script.js"></script>
 </body>
 </html>
