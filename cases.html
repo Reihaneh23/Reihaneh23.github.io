@@ -2,44 +2,61 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Submit a Case | MedCaseShare</title>
+    <title>Case Details | MedCaseShare</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <nav>
         <div class="logo">MedCaseShare</div>
         <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="cases.html">Cases</a></li>
-            <li><a href="articles.html">Articles</a></li>
-            <li><a href="about.html">About</a></li>
+            <li><a href="index.html">← Back to Cases</a></li>
         </ul>
     </nav>
 
-    <section class="case-form">
-        <h2>Submit a Medical Case</h2>
-        <form id="caseSubmissionForm">
-            <label for="caseTitle">Case Title:</label>
-            <input type="text" id="caseTitle" required>
+    <main class="case-details">
+        <h1 id="caseTitle">Loading case...</h1>
+        <div id="caseContent">
+            <p id="caseDescription"></p>
+            <small id="caseDate"></small>
+        </div>
+    </main>
 
-            <label for="caseDescription">Description:</label>
-            <textarea id="caseDescription" required></textarea>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script>
+        // Initialize Firebase (same config as index.html)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAEiK7_TLPLr6mOgLD0Sd-ULHO-DC7q9pg",
+            authDomain: "medussion.firebaseapp.com",
+            databaseURL: "https://medussion-default-rtdb.firebaseio.com",
+            projectId: "medussion",
+            storageBucket: "medussion.appspot.com",
+            messagingSenderId: "734202700211",
+            appId: "1:734202700211:web:11065e5e65965b1782abc6"
+        };
+        firebase.initializeApp(firebaseConfig);
 
-            <label for="labReports">Upload Lab Reports (Image/PDF):</label>
-            <input type="file" id="labReports" accept=".jpg,.png,.pdf">
-
-            <label for="graphs">Upload Graphs (ECG/X-ray):</label>
-            <input type="file" id="graphs" accept=".jpg,.png">
-
-            <button type="submit" class="btn">Submit Case</button>
-        </form>
-    </section>
-
-    <footer>
-        <p>&copy; 2024 MedCaseShare</p>
-    </footer>
-
-    <script src="script.js"></script>
+        // Load case details
+        const urlParams = new URLSearchParams(window.location.search);
+        const caseId = urlParams.get('id');
+        
+        if (caseId) {
+            firebase.database().ref(`cases/${caseId}`).once('value')
+                .then(snapshot => {
+                    const caseData = snapshot.val();
+                    if (caseData) {
+                        document.getElementById('caseTitle').textContent = caseData.title;
+                        document.getElementById('caseDescription').textContent = caseData.description;
+                        document.getElementById('caseDate').textContent = new Date(caseData.timestamp).toLocaleString();
+                    } else {
+                        document.getElementById('caseContent').innerHTML = '<p>Case not found</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error("Error loading case:", error);
+                    document.getElementById('caseContent').innerHTML = '<p>Error loading case details</p>';
+                });
+        }
+    </script>
 </body>
 </html>
