@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Case Details | MedCaseShare</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .case-details {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .case-header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .case-title {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .case-meta {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        .case-content {
+            line-height: 1.6;
+            white-space: pre-line;
+        }
+        .attachments {
+            margin-top: 2rem;
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #3498db;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">MedCaseShare</div>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="cases.html">Cases</a></li>
+            <li><a href="articles.html">Articles</a></li>
+            <li><a href="about.html">About</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <a href="cases.html" class="back-link">← Back to All Cases</a>
+        
+        <div class="case-details" id="caseContainer">
+            <div class="loading">Loading case details...</div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 MedCaseShare | Medical Education Platform</p>
+    </footer>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
+    <script>
+        // Initialize Firebase (same config as other pages)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAEiK7_TLPLr6mOgLD0Sd-ULHO-DC7q9pg",
+            authDomain: "medussion.firebaseapp.com",
+            databaseURL: "https://medussion-default-rtdb.firebaseio.com",
+            projectId: "medussion",
+            storageBucket: "medussion.appspot.com",
+            messagingSenderId: "734202700211",
+            appId: "1:734202700211:web:11065e5e65965b1782abc6"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        // Get case ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const caseId = urlParams.get('id');
+        const caseContainer = document.getElementById('caseContainer');
+
+        if (caseId) {
+            // Load case details from Firebase
+            firebase.database().ref(`cases/${caseId}`).once('value')
+                .then(snapshot => {
+                    const caseData = snapshot.val();
+                    
+                    if (caseData) {
+                        caseContainer.innerHTML = `
+                            <div class="case-header">
+                                <h1 class="case-title">${caseData.title}</h1>
+                                <div class="case-meta">
+                                    Submitted on ${new Date(caseData.timestamp).toLocaleString()}
+                                </div>
+                            </div>
+                            <div class="case-content">${caseData.description}</div>
+                            
+                            ${caseData.attachments ? `
+                            <div class="attachments">
+                                <h3>Attachments</h3>
+                                <ul>
+                                    ${caseData.attachments.map(file => `
+                                        <li><a href="${file.url}" target="_blank">${file.name}</a></li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                            ` : ''}
+                        `;
+                    } else {
+                        caseContainer.innerHTML = '<p>Case not found. It may have been deleted.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error("Error loading case:", error);
+                    caseContainer.innerHTML = '<p class="error">Failed to load case details. Please try again.</p>';
+                });
+        } else {
+            caseContainer.innerHTML = '<p>No case specified. Please select one from the cases list.</p>';
+        }
+    </script>
+</body>
+</html>
