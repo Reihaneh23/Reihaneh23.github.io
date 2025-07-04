@@ -8,43 +8,135 @@
     <style>
         .cases-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 2rem;
-            margin-top: 2rem;
+            margin: 2rem auto;
+            max-width: 1200px;
+            padding: 0 1rem;
         }
-        .submit-section, .view-section {
+
+        @media (min-width: 992px) {
+            .cases-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .case-form-section, .cases-list-section {
             background: white;
-            padding: 2rem;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
-        .case-list {
-            max-height: 500px;
+
+        .file-upload-container {
+            margin: 1.5rem 0;
+        }
+
+        .file-upload-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        .file-preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .file-preview {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #eee;
+        }
+
+        .file-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .file-preview .remove-btn {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .file-preview.pdf {
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .file-preview.pdf::before {
+            content: "PDF";
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .cases-list {
+            max-height: 70vh;
             overflow-y: auto;
+            padding-right: 1rem;
         }
+
         .case-item {
-            padding: 1rem;
+            padding: 1.5rem;
             margin-bottom: 1rem;
-            border-left: 4px solid #3498db;
+            border-left: 4px solid var(--primary);
             cursor: pointer;
             transition: all 0.3s ease;
+            background: white;
+            border-radius: 4px;
         }
+
         .case-item:hover {
-            background: #f8f9fa;
             transform: translateX(5px);
+            box-shadow: 0 3px 12px rgba(0,0,0,0.1);
         }
+
+        .case-item.has-attachments::after {
+            content: "📎";
+            margin-left: 0.5rem;
+        }
+
         .case-title {
-            font-weight: bold;
+            font-weight: 600;
             margin-bottom: 0.5rem;
+            color: var(--secondary);
         }
-        .case-date {
-            color: #7f8c8d;
+
+        .case-preview {
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .case-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--gray);
             font-size: 0.8rem;
-        }
-        @media (max-width: 768px) {
-            .cases-container {
-                grid-template-columns: 1fr;
-            }
         }
     </style>
 </head>
@@ -57,35 +149,52 @@
             <li><a href="articles.html">Articles</a></li>
             <li><a href="about.html">About</a></li>
         </ul>
+        <button class="mobile-menu-btn" aria-label="Toggle menu">☰</button>
     </nav>
 
     <main class="cases-container">
-        <!-- Submit New Case Section -->
-        <section class="submit-section">
+        <!-- Case Submission Section -->
+        <section class="case-form-section">
             <h2>Submit New Case</h2>
             <form id="caseSubmissionForm">
                 <div class="form-group">
-                    <label for="caseTitle">Case Title</label>
-                    <input type="text" id="caseTitle" required>
+                    <label for="caseTitle">Case Title*</label>
+                    <input type="text" id="caseTitle" required placeholder="E.g. Unusual ECG findings in 45yo male">
                 </div>
+
                 <div class="form-group">
-                    <label for="caseDescription">Description</label>
-                    <textarea id="caseDescription" rows="5" required></textarea>
+                    <label for="caseDescription">Case Description*</label>
+                    <textarea id="caseDescription" rows="6" required 
+                              placeholder="Patient history, symptoms, findings..."></textarea>
                 </div>
-                <div class="form-group">
-                    <label>Upload Files (Optional)</label>
-                    <input type="file" id="labReports" accept=".pdf,.jpg,.png">
-                    <input type="file" id="ecgGraphs" accept=".jpg,.png">
+
+                <div class="file-upload-container">
+                    <label class="file-upload-label">Upload Lab Reports/Images (Max 5MB each)</label>
+                    <input type="file" id="caseAttachments" multiple 
+                           accept=".pdf,.jpg,.jpeg,.png,.gif" style="display: none;">
+                    <button type="button" class="btn btn-outline" 
+                            onclick="document.getElementById('caseAttachments').click()">
+                        📁 Select Files
+                    </button>
+                    <div class="file-preview-container" id="filePreviews"></div>
                 </div>
-                <button type="submit" class="btn">Submit Case</button>
+
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    Submit Case
+                </button>
             </form>
         </section>
 
-        <!-- View Cases Section -->
-        <section class="view-section">
-            <h2>Recent Cases</h2>
-            <div class="case-list" id="casesList">
-                <div class="loading">Loading cases...</div>
+        <!-- Cases List Section -->
+        <section class="cases-list-section">
+            <div class="section-header">
+                <h2>Recent Cases</h2>
+                <div class="search-box">
+                    <input type="text" placeholder="Search cases..." id="searchInput">
+                </div>
+            </div>
+            <div class="cases-list" id="casesList">
+                <div class="loading-spinner"></div>
             </div>
         </section>
     </main>
@@ -94,10 +203,13 @@
         <p>&copy; 2024 MedCaseShare | Medical Education Platform</p>
     </footer>
 
-    <!-- Firebase and App Scripts -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+
+    <!-- Main App Script -->
     <script>
         // Firebase Configuration
         const firebaseConfig = {
@@ -109,82 +221,200 @@
             messagingSenderId: "734202700211",
             appId: "1:734202700211:web:11065e5e65965b1782abc6"
         };
-        
+
         // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
         const database = firebase.database();
+        const storage = firebase.storage();
+        const storageRef = storage.ref();
 
         // DOM Elements
-        const form = document.getElementById('caseSubmissionForm');
-        const casesList = document.getElementById('casesList');
+        const elements = {
+            form: document.getElementById('caseSubmissionForm'),
+            caseTitle: document.getElementById('caseTitle'),
+            caseDescription: document.getElementById('caseDescription'),
+            fileInput: document.getElementById('caseAttachments'),
+            filePreviews: document.getElementById('filePreviews'),
+            casesList: document.getElementById('casesList'),
+            submitBtn: document.getElementById('submitBtn'),
+            searchInput: document.getElementById('searchInput')
+        };
 
-        // Load Cases
-        function loadCases() {
-            casesList.innerHTML = '<div class="loading">Loading cases...</div>';
+        // State
+        let selectedFiles = [];
+
+        // File Upload Handling
+        elements.fileInput.addEventListener('change', (e) => {
+            selectedFiles = Array.from(e.target.files);
+            renderFilePreviews();
+        });
+
+        function renderFilePreviews() {
+            elements.filePreviews.innerHTML = '';
             
-            database.ref('cases').orderByChild('timestamp').limitToLast(10).on('value', (snapshot) => {
-                const cases = snapshot.val();
-                casesList.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const preview = document.createElement('div');
+                preview.className = `file-preview ${file.type.includes('pdf') ? 'pdf' : ''}`;
                 
-                if (!cases) {
-                    casesList.innerHTML = '<p>No cases found. Be the first to submit one!</p>';
-                    return;
+                if (file.type.includes('image')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        preview.innerHTML = `
+                            <img src="${e.target.result}" alt="${file.name}">
+                            <button class="remove-btn" data-index="${index}">×</button>
+                        `;
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    preview.innerHTML = `
+                        <button class="remove-btn" data-index="${index}">×</button>
+                    `;
                 }
                 
-                Object.entries(cases).reverse().forEach(([id, caseData]) => {
-                    const caseElement = document.createElement('div');
-                    caseElement.className = 'case-item';
-                    caseElement.innerHTML = `
-                        <div class="case-title">${caseData.title}</div>
-                        <div class="case-preview">${caseData.description.substring(0, 100)}...</div>
-                        <div class="case-date">${new Date(caseData.timestamp).toLocaleString()}</div>
-                    `;
-                    caseElement.addEventListener('click', () => {
-                        window.location.href = `case-details.html?id=${id}`;
-                    });
-                    casesList.appendChild(caseElement);
+                elements.filePreviews.appendChild(preview);
+            });
+
+            // Add event listeners to remove buttons
+            document.querySelectorAll('.remove-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const index = parseInt(btn.getAttribute('data-index'));
+                    selectedFiles.splice(index, 1);
+                    renderFilePreviews();
                 });
             });
         }
 
         // Form Submission
-        form.addEventListener('submit', async (e) => {
+        elements.form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const submitBtn = form.querySelector('button');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Submitting...';
+            const submitBtn = elements.submitBtn;
             
             try {
-                const user = firebase.auth().currentUser || await firebase.auth().signInAnonymously();
-                
+                // Validate form
+                if (!elements.caseTitle.value.trim() || !elements.caseDescription.value.trim()) {
+                    throw new Error('Please fill all required fields');
+                }
+
+                // Set loading state
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="loading-spinner small"></span> Submitting...';
+
+                // Authenticate if needed
+                const user = auth.currentUser || await auth.signInAnonymously().then(cred => cred.user);
+
+                // Prepare case data
                 const caseData = {
-                    title: form.caseTitle.value.trim(),
-                    description: form.caseDescription.value.trim(),
+                    title: elements.caseTitle.value.trim(),
+                    description: elements.caseDescription.value.trim(),
                     timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    userId: user.uid
+                    userId: user.uid,
+                    attachments: []
                 };
-                
-                await database.ref('cases').push(caseData);
-                form.reset();
+
+                // Upload files if any
+                if (selectedFiles.length > 0) {
+                    const uploadPromises = selectedFiles.map(file => {
+                        const fileRef = storageRef.child(`cases/${Date.now()}_${file.name}`);
+                        return fileRef.put(file)
+                            .then(snapshot => snapshot.ref.getDownloadURL())
+                            .then(url => ({
+                                name: file.name,
+                                type: file.type,
+                                url: url,
+                                size: file.size
+                            }));
+                    });
+
+                    caseData.attachments = await Promise.all(uploadPromises);
+                }
+
+                // Save to database
+                const newCaseRef = database.ref('cases').push();
+                await newCaseRef.set(caseData);
+
+                // Success
                 alert('Case submitted successfully!');
+                elements.form.reset();
+                selectedFiles = [];
+                elements.filePreviews.innerHTML = '';
                 loadCases(); // Refresh the list
+
             } catch (error) {
                 console.error('Submission error:', error);
-                alert('Error submitting case: ' + error.message);
+                alert(`Error: ${error.message}`);
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Submit Case';
             }
         });
 
+        // Load and Display Cases
+        function loadCases(searchTerm = '') {
+            elements.casesList.innerHTML = '<div class="loading-spinner"></div>';
+            
+            database.ref('cases').orderByChild('timestamp').once('value')
+                .then(snapshot => {
+                    const cases = [];
+                    snapshot.forEach(childSnapshot => {
+                        const caseData = childSnapshot.val();
+                        if (!searchTerm || 
+                            caseData.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            caseData.description.toLowerCase().includes(searchTerm.toLowerCase())) {
+                            cases.push({
+                                id: childSnapshot.key,
+                                ...caseData
+                            });
+                        }
+                    });
+
+                    renderCases(cases.reverse()); // Newest first
+                })
+                .catch(error => {
+                    console.error('Error loading cases:', error);
+                    elements.casesList.innerHTML = '<p class="error">Failed to load cases. Please refresh.</p>';
+                });
+        }
+
+        function renderCases(cases) {
+            if (cases.length === 0) {
+                elements.casesList.innerHTML = '<p>No cases found. Be the first to submit one!</p>';
+                return;
+            }
+
+            elements.casesList.innerHTML = cases.map(caseData => `
+                <div class="case-item ${caseData.attachments?.length ? 'has-attachments' : ''}" 
+                     onclick="window.location.href='case-details.html?id=${caseData.id}'">
+                    <h3 class="case-title">${caseData.title}</h3>
+                    <p class="case-preview">${caseData.description.substring(0, 150)}...</p>
+                    <div class="case-meta">
+                        <span>${new Date(caseData.timestamp).toLocaleDateString()}</span>
+                        <span>${caseData.attachments?.length || 0} attachment(s)</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Search Functionality
+        elements.searchInput.addEventListener('input', (e) => {
+            loadCases(e.target.value.trim());
+        });
+
         // Initialize
-        firebase.auth().signInAnonymously()
+        auth.signInAnonymously()
             .then(() => loadCases())
             .catch(error => {
                 console.error('Auth error:', error);
-                casesList.innerHTML = '<p class="error">Connection error. Please refresh.</p>';
+                elements.casesList.innerHTML = '<p class="error">Connection error. Please refresh.</p>';
             });
+
+        // Mobile Menu
+        document.querySelector('.mobile-menu-btn').addEventListener('click', () => {
+            document.querySelector('nav ul').classList.toggle('active');
+        });
     </script>
 </body>
 </html>
