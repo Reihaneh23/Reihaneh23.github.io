@@ -2,29 +2,104 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Case Details | MedCaseShare</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Cases | MedCaseShare</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .cases-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .submit-section, .view-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .case-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .case-item {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #3498db;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .case-item:hover {
+            background: #f8f9fa;
+            transform: translateX(5px);
+        }
+        .case-title {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .case-date {
+            color: #7f8c8d;
+            font-size: 0.8rem;
+        }
+        @media (max-width: 768px) {
+            .cases-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
     <nav>
         <div class="logo">MedCaseShare</div>
         <ul>
-            <li><a href="index.html">← Back to Cases</a></li>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="cases.html" class="active">Cases</a></li>
+            <li><a href="articles.html">Articles</a></li>
+            <li><a href="about.html">About</a></li>
         </ul>
     </nav>
 
-    <main class="case-details">
-        <h1 id="caseTitle">Loading case...</h1>
-        <div id="caseContent">
-            <p id="caseDescription"></p>
-            <small id="caseDate"></small>
-        </div>
+    <main class="cases-container">
+        <!-- Submit New Case Section -->
+        <section class="submit-section">
+            <h2>Submit New Case</h2>
+            <form id="caseSubmissionForm">
+                <div class="form-group">
+                    <label for="caseTitle">Case Title</label>
+                    <input type="text" id="caseTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="caseDescription">Description</label>
+                    <textarea id="caseDescription" rows="5" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Upload Files (Optional)</label>
+                    <input type="file" id="labReports" accept=".pdf,.jpg,.png">
+                    <input type="file" id="ecgGraphs" accept=".jpg,.png">
+                </div>
+                <button type="submit" class="btn">Submit Case</button>
+            </form>
+        </section>
+
+        <!-- View Cases Section -->
+        <section class="view-section">
+            <h2>Recent Cases</h2>
+            <div class="case-list" id="casesList">
+                <div class="loading">Loading cases...</div>
+            </div>
+        </section>
     </main>
 
+    <footer>
+        <p>&copy; 2024 MedCaseShare | Medical Education Platform</p>
+    </footer>
+
+    <!-- Firebase and App Scripts -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script>
-        // Initialize Firebase (same config as index.html)
+        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAEiK7_TLPLr6mOgLD0Sd-ULHO-DC7q9pg",
             authDomain: "medussion.firebaseapp.com",
@@ -34,29 +109,82 @@
             messagingSenderId: "734202700211",
             appId: "1:734202700211:web:11065e5e65965b1782abc6"
         };
-        firebase.initializeApp(firebaseConfig);
-
-        // Load case details
-        const urlParams = new URLSearchParams(window.location.search);
-        const caseId = urlParams.get('id');
         
-        if (caseId) {
-            firebase.database().ref(`cases/${caseId}`).once('value')
-                .then(snapshot => {
-                    const caseData = snapshot.val();
-                    if (caseData) {
-                        document.getElementById('caseTitle').textContent = caseData.title;
-                        document.getElementById('caseDescription').textContent = caseData.description;
-                        document.getElementById('caseDate').textContent = new Date(caseData.timestamp).toLocaleString();
-                    } else {
-                        document.getElementById('caseContent').innerHTML = '<p>Case not found</p>';
-                    }
-                })
-                .catch(error => {
-                    console.error("Error loading case:", error);
-                    document.getElementById('caseContent').innerHTML = '<p>Error loading case details</p>';
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // DOM Elements
+        const form = document.getElementById('caseSubmissionForm');
+        const casesList = document.getElementById('casesList');
+
+        // Load Cases
+        function loadCases() {
+            casesList.innerHTML = '<div class="loading">Loading cases...</div>';
+            
+            database.ref('cases').orderByChild('timestamp').limitToLast(10).on('value', (snapshot) => {
+                const cases = snapshot.val();
+                casesList.innerHTML = '';
+                
+                if (!cases) {
+                    casesList.innerHTML = '<p>No cases found. Be the first to submit one!</p>';
+                    return;
+                }
+                
+                Object.entries(cases).reverse().forEach(([id, caseData]) => {
+                    const caseElement = document.createElement('div');
+                    caseElement.className = 'case-item';
+                    caseElement.innerHTML = `
+                        <div class="case-title">${caseData.title}</div>
+                        <div class="case-preview">${caseData.description.substring(0, 100)}...</div>
+                        <div class="case-date">${new Date(caseData.timestamp).toLocaleString()}</div>
+                    `;
+                    caseElement.addEventListener('click', () => {
+                        window.location.href = `case-details.html?id=${id}`;
+                    });
+                    casesList.appendChild(caseElement);
                 });
+            });
         }
+
+        // Form Submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = form.querySelector('button');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            
+            try {
+                const user = firebase.auth().currentUser || await firebase.auth().signInAnonymously();
+                
+                const caseData = {
+                    title: form.caseTitle.value.trim(),
+                    description: form.caseDescription.value.trim(),
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    userId: user.uid
+                };
+                
+                await database.ref('cases').push(caseData);
+                form.reset();
+                alert('Case submitted successfully!');
+                loadCases(); // Refresh the list
+            } catch (error) {
+                console.error('Submission error:', error);
+                alert('Error submitting case: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Case';
+            }
+        });
+
+        // Initialize
+        firebase.auth().signInAnonymously()
+            .then(() => loadCases())
+            .catch(error => {
+                console.error('Auth error:', error);
+                casesList.innerHTML = '<p class="error">Connection error. Please refresh.</p>';
+            });
     </script>
 </body>
 </html>
