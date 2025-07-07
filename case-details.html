@@ -6,44 +6,133 @@
     <title>Case Details | MedCaseShare</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        .case-details {
-            max-width: 800px;
+        .case-detail-container {
+            max-width: 900px;
             margin: 2rem auto;
             padding: 2rem;
             background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
+
         .case-header {
             border-bottom: 1px solid #eee;
             padding-bottom: 1rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
+
         .case-title {
-            color: #2c3e50;
+            color: var(--secondary);
             margin-top: 0;
+            font-size: 1.8rem;
         }
+
         .case-meta {
-            color: #7f8c8d;
-            font-size: 0.9rem;
-        }
-        .case-content {
-            line-height: 1.6;
-            white-space: pre-line;
-        }
-        .attachments {
-            margin-top: 2rem;
-            border-top: 1px solid #eee;
-            padding-top: 1rem;
-        }
-        .back-link {
-            display: inline-block;
+            display: flex;
+            justify-content: space-between;
+            color: var(--gray);
             margin-bottom: 1rem;
-            color: #3498db;
-            text-decoration: none;
         }
-        .back-link:hover {
-            text-decoration: underline;
+
+        .case-content {
+            line-height: 1.8;
+            white-space: pre-line;
+            margin-bottom: 2rem;
+        }
+
+        .attachments-section {
+            margin-top: 3rem;
+            border-top: 1px solid #eee;
+            padding-top: 2rem;
+        }
+
+        .attachments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .attachment-card {
+            border: 1px solid #eee;
+            border-radius: 6px;
+            overflow: hidden;
+            transition: transform 0.2s ease;
+        }
+
+        .attachment-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .attachment-preview {
+            height: 150px;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .attachment-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .attachment-preview.pdf {
+            background: #f1f8fe;
+        }
+
+        .attachment-preview.pdf::before {
+            content: "PDF";
+            font-size: 2rem;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .attachment-info {
+            padding: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .attachment-name {
+            font-weight: 500;
+            margin-bottom: 0.3rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .attachment-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--gray);
+            font-size: 0.8rem;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .loading-container {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .case-detail-container {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+            
+            .attachments-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -56,13 +145,47 @@
             <li><a href="articles.html">Articles</a></li>
             <li><a href="about.html">About</a></li>
         </ul>
+        <button class="mobile-menu-btn" aria-label="Toggle menu">☰</button>
     </nav>
 
     <main>
-        <a href="cases.html" class="back-link">← Back to All Cases</a>
-        
-        <div class="case-details" id="caseContainer">
-            <div class="loading">Loading case details...</div>
+        <a href="cases.html" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back to Cases
+        </a>
+
+        <div class="case-detail-container">
+            <div id="caseLoading" class="loading-container">
+                <div class="loading-spinner"></div>
+                <p>Loading case details...</p>
+            </div>
+
+            <div id="caseContent" style="display: none;">
+                <div class="case-header">
+                    <h1 id="caseTitle" class="case-title"></h1>
+                    <div class="case-meta">
+                        <span id="caseDate"></span>
+                        <span id="caseAuthor"></span>
+                    </div>
+                </div>
+
+                <div id="caseDescription" class="case-content"></div>
+
+                <div class="attachments-section" id="attachmentsSection">
+                    <h2>Attachments</h2>
+                    <div class="attachments-grid" id="attachmentsGrid"></div>
+                </div>
+            </div>
+
+            <div id="caseError" style="display: none;">
+                <div class="error-message">
+                    <h2>Case Not Found</h2>
+                    <p>The requested case could not be loaded. It may have been deleted or you may not have permission to view it.</p>
+                    <a href="cases.html" class="btn btn-primary">Browse All Cases</a>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -72,64 +195,11 @@
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    
-    <script>
-        // Initialize Firebase (same config as other pages)
-        const firebaseConfig = {
-            apiKey: "AIzaSyAEiK7_TLPLr6mOgLD0Sd-ULHO-DC7q9pg",
-            authDomain: "medussion.firebaseapp.com",
-            databaseURL: "https://medussion-default-rtdb.firebaseio.com",
-            projectId: "medussion",
-            storageBucket: "medussion.appspot.com",
-            messagingSenderId: "734202700211",
-            appId: "1:734202700211:web:11065e5e65965b1782abc6"
-        };
-        firebase.initializeApp(firebaseConfig);
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
-        // Get case ID from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const caseId = urlParams.get('id');
-        const caseContainer = document.getElementById('caseContainer');
-
-        if (caseId) {
-            // Load case details from Firebase
-            firebase.database().ref(`cases/${caseId}`).once('value')
-                .then(snapshot => {
-                    const caseData = snapshot.val();
-                    
-                    if (caseData) {
-                        caseContainer.innerHTML = `
-                            <div class="case-header">
-                                <h1 class="case-title">${caseData.title}</h1>
-                                <div class="case-meta">
-                                    Submitted on ${new Date(caseData.timestamp).toLocaleString()}
-                                </div>
-                            </div>
-                            <div class="case-content">${caseData.description}</div>
-                            
-                            ${caseData.attachments ? `
-                            <div class="attachments">
-                                <h3>Attachments</h3>
-                                <ul>
-                                    ${caseData.attachments.map(file => `
-                                        <li><a href="${file.url}" target="_blank">${file.name}</a></li>
-                                    `).join('')}
-                                </ul>
-                            </div>
-                            ` : ''}
-                        `;
-                    } else {
-                        caseContainer.innerHTML = '<p>Case not found. It may have been deleted.</p>';
-                    }
-                })
-                .catch(error => {
-                    console.error("Error loading case:", error);
-                    caseContainer.innerHTML = '<p class="error">Failed to load case details. Please try again.</p>';
-                });
-        } else {
-            caseContainer.innerHTML = '<p>No case specified. Please select one from the cases list.</p>';
-        }
-    </script>
+    <!-- Main Script -->
+    <script src="script.js"></script>
 </body>
 </html>
